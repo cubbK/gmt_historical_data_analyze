@@ -1,5 +1,5 @@
-import duckdb
 from playwright.sync_api import sync_playwright
+import pandas as pd
 
 
 def scrap_internet_archive_links() -> dict:
@@ -55,32 +55,18 @@ def scrap_internet_archive_links() -> dict:
         return link_dictionary
 
 
-def insert_links_into_duckdb(links: dict, db_path: str = "links.duckdb"):
-    # Connect to DuckDB (creates the database file if it doesn't exist)
-    conn = duckdb.connect(db_path)
-
-    # Create a table for storing links if it doesn't already exist
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS archive_links (
-            title TEXT,
-            link TEXT
-        )
-    """)
-
-    # Insert the links into the table
-    for title, link in links.items():
-        conn.execute(
-            "INSERT INTO archive_links (title, link) VALUES (?, ?)", (title, link)
-        )
-
-    # Close the connection
-    conn.close()
-
-
-if __name__ == "__main__":
+def run():
     print("Scraping internet archive...")
     links = scrap_internet_archive_links()
 
-    print("Inserting into DuckDB...")
-    insert_links_into_duckdb(links)
-    print("Links successfully inserted into DuckDB.")
+    # Convert the dictionary to a DataFrame
+    df = pd.DataFrame(list(links.items()), columns=["Title", "Link"])
+
+    # Export the DataFrame to a CSV file
+    df.to_csv("output/internet_archive_links.csv", index=False)
+
+    print("Links exported to 'links.csv'.")
+
+
+if __name__ == "__main__":
+    run()
